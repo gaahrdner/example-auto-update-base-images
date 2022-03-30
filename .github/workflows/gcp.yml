@@ -52,9 +52,9 @@ jobs:
 
       - name: Sign image with a key
         run: |
-          echo ${COSIGN_KEY} > /tmp/my_cosign.key && \
+          echo ${COSIGN_PUB_KEY} > /tmp/my_cosign.key && \
           cosign sign --key /tmp/my_cosign.key ${TAGS}
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
-          COSIGN_KEY: ${{secrets.COSIGN_KEY}}
+          COSIGN_KEY: ${{secrets.COSIGN_PUB_KEY}}
           COSIGN_PASSWORD: ""
