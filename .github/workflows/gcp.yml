@@ -12,6 +12,7 @@ jobs:
     env:
       IMAGE_NAME: python-base
       PROJECT_ID: just-fuckin-around
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -20,6 +21,12 @@ jobs:
         uses: google-github-actions/auth@v0
         with:
           credentials_json: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@1e95c1de343b5b0c23352d6417ee3e48d5bcd422
+        with:
+          cosign-release: "v1.4.0"
 
       - name: Docker metadata
         id: meta
@@ -37,9 +44,16 @@ jobs:
           gcloud auth configure-docker us-west1-docker.pkg.dev --quiet
 
       - name: Build and push to Artifact Registry
+        id: build-and-push
         uses: docker/build-push-action@v2
         with:
           context: .
           push: ${{ GitHub.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Sign the published Docker image
+        if: ${{ github.event_name != 'pull_request'}}
+        env:
+          COSIGN_EXPERIMENTAL: true
+        run: cosign sign us-west1-docker.pkg.dev/just-fuckin-around/images/python-base@{{ steps.build-and-push.outputs.digest }}
