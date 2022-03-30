@@ -1,17 +1,13 @@
 ---
-name: Build and Push Python Image to Artifact Registry
+name: Checm for Updated Docker Image
+
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: "0 4 * * *"
 
 jobs:
-  build-push-gcr:
-    name: Build and Push to GCP
+  docker:
     runs-on: ubuntu-latest
-    env:
-      IMAGE_NAME: python-base
-      PROJECT_ID: just-fuckin-around
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -20,6 +16,13 @@ jobs:
         uses: google-github-actions/auth@v0
         with:
           credentials_json: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+
+      - name: Check if update available
+        id: check
+        uses: lucacome/docker-image-update-checker@v1
+        with:
+          base-image: library/python:3.10
+          image: us-west1-docker.pkg.dev/just-fuckin-around/images/python-base:latest
 
       - name: Docker metadata
         uses: docker/metadata-action@v3
@@ -30,14 +33,10 @@ jobs:
           flavor: |
             latest=auto
 
-      - name: Configure Docker Client
-        run: |-
-          gcloud auth configure-docker --quiet
-          gcloud auth configure-docker us-west1-docker.pkg.dev --quiet
-
-      - name: Build and push image to Artifact Registry
+      - name: Build and push
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
           tags: us-west1-docker.pkg.dev/just-fuckin-around/images/python-base
+        if: steps.check.outputs.needs-updating == 'true'
