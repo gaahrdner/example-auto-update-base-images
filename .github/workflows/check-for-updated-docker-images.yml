@@ -25,6 +25,7 @@ jobs:
           image: us-west1-docker.pkg.dev/just-fuckin-around/images/python-base:latest
 
       - name: Docker metadata
+        id: meta
         uses: docker/metadata-action@v3
         with:
           images: us-west1-docker.pkg.dev/just-fuckin-around/images/python-base
@@ -33,10 +34,11 @@ jobs:
           flavor: |
             latest=auto
 
-      - name: Build and push
+      - name: Build and push to Artifact Registry
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
-          tags: us-west1-docker.pkg.dev/just-fuckin-around/images/python-base
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
         if: steps.check.outputs.needs-updating == 'true'
