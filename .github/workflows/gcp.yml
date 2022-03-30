@@ -24,9 +24,9 @@ jobs:
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@1e95c1de343b5b0c23352d6417ee3e48d5bcd422
+        uses: sigstore/cosign-installer@main
         with:
-          cosign-release: "v1.4.0"
+          cosign-release: "v2.1.0"
 
       - name: Docker metadata
         id: meta
@@ -55,5 +55,7 @@ jobs:
       - name: Sign the published Docker image
         if: ${{ github.event_name != 'pull_request'}}
         env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ""
           COSIGN_EXPERIMENTAL: true
         run: cosign sign us-west1-docker.pkg.dev/just-fuckin-around/images/python-base@{{ steps.build-and-push.outputs.digest }}
