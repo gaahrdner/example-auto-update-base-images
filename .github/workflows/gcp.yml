@@ -53,7 +53,10 @@ jobs:
       - name: Sign the published Docker image
         if: ${{ github.event_name != 'pull_request'}}
         env:
+          TAGS: ${{ steps.meta.outputs.tags }}
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ""
           COSIGN_EXPERIMENTAL: true
-        run: cosign sign us-west1-docker.pkg.dev/just-fuckin-around/images/python-base@{{ steps.build-and-push.outputs.digest }}
+        run: |
+          - echo ${COSIGN_KEY} > /tmp/my_cosign.key && \
+          cosign sign --key /tmp/my_cosign.key ${TAGS}
